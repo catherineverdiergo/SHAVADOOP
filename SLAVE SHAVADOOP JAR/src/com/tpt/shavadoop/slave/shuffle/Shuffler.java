@@ -2,22 +2,48 @@ package com.tpt.shavadoop.slave.shuffle;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.tpt.shavadoop.master.ResourceManager;
 import com.tpt.shavadoop.slave.Slave;
+import com.tpt.shavadoop.util.CommonTags;
 import com.tpt.shavadoop.util.FileUtils;
 
 public class Shuffler {
 	
-	private static final Logger logger = Logger.getLogger(ResourceManager.class);
+	private static final Logger logger = Logger.getLogger(Shuffler.class);
 
+	// List of files to shuffle will be written in a file
+	private String fileListName;
+
+	// Will be filled from data in fileListName 
 	private List<String> inputFiles = new ArrayList<String>();
 	
+	// wordKey to look for during shuffle 
 	private String wordKey;
+	
+	/**
+	 * Constructor : construct list of files to shuffle
+	 * @param fileListName
+	 */
+	public Shuffler(String fileListName) {
+		super();
+		this.fileListName = fileListName;
+		BufferedReader br = FileUtils.openFile4Read(this.fileListName);
+		try {
+			String line = br.readLine();
+			while (line !=null) {
+				inputFiles.add(line);
+			}
+		}
+		catch (IOException e) {
+			logger.error(e,e);
+		}
+		FileUtils.close(br);
+	}
 
 	/**
 	 * HeartBeat class : display a message on stderr
@@ -39,7 +65,7 @@ public class Shuffler {
 
 		@Override
 		public void run() {
-			System.err.println("HeartBeat shuffler for file "+inputFile+" ,key: "+key);
+			System.err.println(CommonTags.TAG_HEART_BEAT+"HeartBeat shuffler for file "+inputFile+" ,key: "+key);
 			try {
 				Thread.sleep(Slave.DEFAULT_HB_DELAY);
 			}
@@ -79,9 +105,11 @@ public class Shuffler {
 				FileUtils.close(br);
 			}
 			FileUtils.close(bw);
+			System.err.println(CommonTags.TAG_FINISHED_TASK+"Shuffle terminated");
 		}
 		catch (Exception e) {
 			logger.error(e,e);
+			System.err.println(CommonTags.TAG_ERROR_TASK+"IO error during shuffle");
 		}
 	}
 

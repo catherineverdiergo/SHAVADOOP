@@ -2,7 +2,7 @@
  * AbstractMapper : abstract class to perform a map task
  * Should be derived to carry out a specific map algorithm
  */
-package com.tpt.shavadoop.slave.map;
+package com.tpt.shavadoop.slave.reduce;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -13,9 +13,9 @@ import com.tpt.shavadoop.slave.Slave;
 import com.tpt.shavadoop.util.CommonTags;
 import com.tpt.shavadoop.util.FileUtils;
 
-public abstract class AbstractMapper {
+public abstract class AbstractReducer {
 
-	private static final Logger logger = Logger.getLogger(AbstractMapper.class);
+	private static final Logger logger = Logger.getLogger(AbstractReducer.class);
 	
 	/**
 	 * Should be implemented : retrieve next token data from input flow
@@ -25,18 +25,18 @@ public abstract class AbstractMapper {
 	abstract Object getNextToken(BufferedReader inReader);
 	
 	/**
-	 * Should be implemented : process map task for an input token
+	 * Should be implemented : process reduce task for an input token
 	 * @param inputToken
 	 * @param outWriter
 	 */
-	abstract void doCustomMap(Object inputToken, BufferedWriter outWriter);
+	abstract void doCustomReduce(Object inputToken, BufferedWriter outWriter);
 	
 	/**
 	 * If necessary add a consolidated information in output file
 	 * @param outWriter
 	 */
 	abstract void addGlobalInformation(BufferedWriter outWriter);
-	
+
 	/**
 	 * Should be implemented (but can be empty) : display a result message
 	 * for the master
@@ -64,7 +64,7 @@ public abstract class AbstractMapper {
 
 		@Override
 		public void run() {
-			System.err.println(CommonTags.TAG_HEART_BEAT+"HeartBeat mapper for file "+inputFile+" ,last token: "+tokenIdx);
+			System.err.println(CommonTags.TAG_HEART_BEAT+"HeartBeat reducer for file "+inputFile+" ,last token: "+tokenIdx);
 			try {
 				Thread.sleep(Slave.DEFAULT_HB_DELAY);
 			}
@@ -76,11 +76,11 @@ public abstract class AbstractMapper {
 	}
 
 	/**
-	 * Process map task
+	 * Process reduce task
 	 * @param inputFile
 	 * @param outputFile
 	 */
-	public void doMap(String inputFile, String outputFile) {
+	public void doReduce(String inputFile, String outputFile) {
 		HeartBeat hb = null;
 		BufferedReader br = FileUtils.openFile4Read(inputFile);
 		BufferedWriter bw = FileUtils.openFile4Write(outputFile);
@@ -88,7 +88,7 @@ public abstract class AbstractMapper {
 		int i = 0;
 		while (token != null) {
 			i++;
-			doCustomMap(token, bw);
+			doCustomReduce(token, bw);
 			if (hb == null || !hb.isAlive()) {
 				hb = new HeartBeat(inputFile);
 				hb.setTokenIdx(i);

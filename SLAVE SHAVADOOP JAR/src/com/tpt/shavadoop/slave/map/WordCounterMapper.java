@@ -71,5 +71,10 @@ public class WordCounterMapper extends AbstractMapper {
 		System.out.println();
 		System.err.println(CommonTags.TAG_FINISHED_TASK+this.getClass().getSimpleName()+" at "+new Date().toString());
 	}
+
+	@Override
+	void addGlobalInformation(BufferedWriter outWriter) {
+		// do nothing for word counter
+	}
 	
 }
