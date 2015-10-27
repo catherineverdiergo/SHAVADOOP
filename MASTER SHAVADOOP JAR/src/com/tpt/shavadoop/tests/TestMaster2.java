@@ -1,11 +1,11 @@
 package com.tpt.shavadoop.tests;
 
+import com.tpt.shavadoop.master.remote.RemoteExecutor;
+
 //import static org.junit.Assert.fail;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
-
-import com.tpt.shavadoop.master.remote.RemoteExecutor;
 
 public class TestMaster2 extends TestCase {
 

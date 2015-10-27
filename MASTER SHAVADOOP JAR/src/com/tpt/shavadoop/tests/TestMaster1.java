@@ -5,13 +5,13 @@ package com.tpt.shavadoop.tests;
 import java.io.File;
 import java.io.FilenameFilter;
 
-import junit.framework.Assert;
-import junit.framework.TestCase;
-
 import com.tpt.shavadoop.master.Configuration;
 import com.tpt.shavadoop.master.remote.RemoteExecutor;
 import com.tpt.shavadoop.master.split.ISplitter;
 import com.tpt.shavadoop.util.FileUtils;
+
+import junit.framework.Assert;
+import junit.framework.TestCase;
 
 public class TestMaster1 extends TestCase {
 

@@ -110,5 +110,9 @@ public class RemoteExecutor extends Thread {
 	public List<StreamMessage> getLastErrMessages() {
 		return fluxErreur.getLastLines();
 	}
+
+	public String getCommand() {
+		return command;
+	}
 	
 }

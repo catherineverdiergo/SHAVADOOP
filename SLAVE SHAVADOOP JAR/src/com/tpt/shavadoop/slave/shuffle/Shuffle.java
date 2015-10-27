@@ -2,6 +2,7 @@ package com.tpt.shavadoop.slave.shuffle;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,9 +13,9 @@ import com.tpt.shavadoop.slave.Slave;
 import com.tpt.shavadoop.util.CommonTags;
 import com.tpt.shavadoop.util.FileUtils;
 
-public class Shuffler {
+public class Shuffle {
 	
-	private static final Logger logger = Logger.getLogger(Shuffler.class);
+	private static final Logger logger = Logger.getLogger(Shuffle.class);
 
 	// List of files to shuffle will be written in a file
 	private String fileListName;
@@ -29,7 +30,7 @@ public class Shuffler {
 	 * Constructor : construct list of files to shuffle
 	 * @param fileListName
 	 */
-	public Shuffler(String fileListName) {
+	public Shuffle(String fileListName) {
 		super();
 		this.fileListName = fileListName;
 		BufferedReader br = FileUtils.openFile4Read(this.fileListName);
@@ -110,6 +111,27 @@ public class Shuffler {
 		catch (Exception e) {
 			logger.error(e,e);
 			System.err.println(CommonTags.TAG_ERROR_TASK+"IO error during shuffle");
+			System.exit(-1);
+		}
+	}
+
+	public void setFileListName(String fileListName) {
+		this.fileListName = fileListName;
+		File file = new File(fileListName);
+		// retrieve key from file name
+		String[] data = file.getName().split(".");
+		this.setWordKey(data[0]);
+		BufferedReader br = FileUtils.openFile4Read(fileListName);
+		try {
+			String fName = br.readLine();
+			while (fName != null) {
+				this.addInputFile(fName);
+				fName = br.readLine();
+			}
+		}
+		catch (Exception e) {
+			System.err.println(CommonTags.TAG_ERROR_TASK+"IO error for shuffle");
+			System.exit(-1);
 		}
 	}
 

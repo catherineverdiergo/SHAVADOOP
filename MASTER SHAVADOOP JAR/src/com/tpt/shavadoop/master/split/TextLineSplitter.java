@@ -36,7 +36,7 @@ public class TextLineSplitter implements ISplitter {
 			String line = br.readLine();
 			while (line != null) {
 				try {
-					String destDir = Configuration.getParameter("tmp.dir");
+					String destDir = Configuration.getWorkingDir();
 					File f = new File(destDir);
 					if (!f.exists()) {
 						f.mkdirs();

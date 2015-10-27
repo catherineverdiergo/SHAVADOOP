@@ -25,7 +25,7 @@ public class FileUtils {
     	return lecteurAvecBuffer;
 	}
 	
-	public static BufferedWriter openFile4Write(String fileName) {
+	public static BufferedWriter openF4Write(String fileName, boolean append) {
 	    BufferedWriter ecrivainAvecBuffer=null;
 	    
 	    try {
@@ -35,17 +35,25 @@ public class FileUtils {
 			if (!file.exists()) {
 				file.createNewFile();
 			}
-			else {
+			else if (!append) {
 				file.delete();
 			}
 
-	    	ecrivainAvecBuffer = new BufferedWriter(new FileWriter(fileName));
+	    	ecrivainAvecBuffer = new BufferedWriter(new FileWriter(fileName, append));
 	    }
 	    catch(IOException exc) {
 	    	exc.printStackTrace();
 	    	System.out.println("Erreur d'ouverture");
 	    }
     	return ecrivainAvecBuffer;
+	}
+
+	public static BufferedWriter openFile4Write(String fileName) {
+		return openF4Write(fileName, false);
+	}
+	
+	public static BufferedWriter openFile4WriteAppend(String fileName) {
+		return openF4Write(fileName, true);
 	}
 	
 	public static BufferedOutputStream openBinFile4Write(String fileName) {
@@ -130,5 +138,20 @@ public class FileUtils {
 		  }
 		  if (!f.delete())
 		    throw new FileNotFoundException("Failed to delete file: " + f);
+	}
+	
+	public static void copyFile(String srcFile, String tgtFile, boolean append) throws IOException {
+		File fsrc = new File(srcFile);
+		if (fsrc.exists()) {
+			BufferedReader br = openFile4Read(srcFile);
+			BufferedWriter bw = openF4Write(tgtFile, append);
+			String line = br.readLine();
+			while (line != null) {
+				bw.write(line);
+				bw.newLine();
+			}
+			close(br);
+			close(bw);
+		}
 	}
 }

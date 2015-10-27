@@ -1,0 +1,40 @@
+Dans le master
+--------------
+* Rajouter la configuration pour le choix du Mapper (DONE)
+
+* Rajouter la configuration pour le choix du Reducer (DONE)
+
+* Algorithme du main Master.java
+	- initialiser la configuration  (DONE)
+	- lancer le splitter en synchrone  (DONE)
+	- créer et lancer tous les mappers  (DONE)
+
+* Compléter le WordCountTaskSelector pour qu'il gère les retours des shuffler,
+  des reducers simples et du reducer final (DONE)
+  
+* Pour chaque exécution de job, créer un répertoire unique avec UUID  (DONE)
+  (afin de permettre l'exécution de plusieurs jobs en silutanné)
+  
+* test unitaires
+	!!! A compléter !!!
+	
+  optionnel ==>
+* Mise en place d'un petit serveur web dans un thread pour servir des pages
+  HTML présentant l'état du système  (DONE)
+* Instantier le serveur HTTP depuis le main (TODO)
+* Implémenter une page Web pour la surveillance du job (TODO)
+  
+Dans le slave
+-------------
+* faire une méthode pour le help de la commande  (DONE)
+
+* implémenter le reducer final  (DONE)
+
+* dans le main du Slave.java, rajouter le lancement (DONE)
+	- d'un shuffle
+	- d'un reducer
+	- de l'agrégateur final
+	
+* test unitaires
+	!!! A compléter !!!
+	
