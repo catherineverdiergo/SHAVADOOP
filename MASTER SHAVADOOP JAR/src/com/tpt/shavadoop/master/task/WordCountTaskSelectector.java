@@ -1,6 +1,7 @@
 package com.tpt.shavadoop.master.task;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,7 +67,7 @@ public class WordCountTaskSelectector implements ITaskSelector {
 		String lastLine = messages.get(messages.size()-1).getMsg();
 		String outputFile = lastLine.substring(CommonTags.TAG_OUTPUT_FILE.length());
 		// Get line in which keys are written
-		String keysLine = messages.get(messages.size()-3).getMsg();
+		String keysLine = messages.get(messages.size()-2).getMsg();
 		String[] keys = keysLine.split("[ \t,]");
 		for (String key:keys) {
 			List<String> files4Key = keyDictionnary.get(key);
@@ -119,7 +120,7 @@ public class WordCountTaskSelectector implements ITaskSelector {
 			// That file will hold all shuffle input files for
 			// a specific key word 
 			String key = itKeys.next();
-			String fileName = tmpDir+"/"+key+".files";
+			String fileName = new File(tmpDir).getAbsolutePath()+"/"+key+".files";
 			BufferedWriter bw = FileUtils.openFile4Write(fileName);
 			List<String> keyUMFiles = keyDictionnary.get(key);
 			for (String UMFile:keyUMFiles) {
@@ -134,7 +135,7 @@ public class WordCountTaskSelectector implements ITaskSelector {
 			simpleKeyDictionnary.put(key, fileName);
 			// Create related shuffle task
 			String shuffleCommand = Configuration.getParameter("slave.prg")+" --shuffle ";
-			shuffleCommand += " "+fileName;
+			shuffleCommand += " \""+FileUtils.addBackspaces(fileName)+"\"";
 			ShuffleRemoteExecutor rShuffle = new ShuffleRemoteExecutor(shuffleCommand);
 			rShuffle.setWordKey(key);
 			TaskManager.addTask(rShuffle);

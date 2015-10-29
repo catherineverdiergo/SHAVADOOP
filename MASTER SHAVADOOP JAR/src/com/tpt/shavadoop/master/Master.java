@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 
 import com.tpt.shavadoop.master.remote.RemoteExecutor;
 import com.tpt.shavadoop.master.split.ISplitter;
+import com.tpt.shavadoop.util.FileUtils;
 
 public class Master {
 	
@@ -53,7 +54,7 @@ public class Master {
 			// Create the map command using the slave.jar java program
 			String mapCommand = Configuration.getParameter("slave.prg")+" --map ";
 			mapCommand += Configuration.getParameter("slave.mapperClass");
-			mapCommand += " "+f.getAbsolutePath();
+			mapCommand += " "+FileUtils.addBackspaces(f.getAbsolutePath());
 			// Create related RemoteExecutor object
 			RemoteExecutor rMapper = new RemoteExecutor(mapCommand);
 			// add it to TaskManager mapper queue
@@ -81,6 +82,13 @@ public class Master {
 		logger.info(Configuration.getMessage("master.init"));
 		
 		//
+		// Prepare list of available hosts
+		//
+		logger.info(Configuration.getMessage("resource_manager.begin"));
+		ResourceManager.getOnlineHosts();
+		logger.info(Configuration.getMessage("resource_manager.end"));
+		
+		//
 		// Get and Start splitter
 		//
 		logger.info(Configuration.getMessage("split.begin"));
@@ -91,11 +99,14 @@ public class Master {
 		//
 		// Create all mappers and add them to TaskManagerMapper queue
 		//
+		logger.info(Configuration.getMessage("resource_manager.begin"));
 		createAllMappers();
+		logger.info(Configuration.getMessage("mapper.create_done"));
 		
 		//
 		// Start TaskManager thread
 		//
+		logger.info(Configuration.getMessage("taskmgr.begin"));
 		TaskManager.applyStarter();
 		
 //		List<String> hosts = ResourceManager.getOnlineHosts();

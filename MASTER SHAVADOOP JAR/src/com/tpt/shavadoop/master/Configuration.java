@@ -95,6 +95,7 @@ public class Configuration {
 	    		if (!wkDirFile.exists()) {
 	    			wkDirFile.mkdirs();
 	    		}
+	    		instance.workDir = wkDirName;
 	    		// create the splitter
 	    		String dataFileName = instance.properties.getProperty("data.file");
 	    		instance.splitter = (ISplitter)Class.forName(instance.properties.getProperty("splitter.class")).getConstructor(String.class).newInstance(dataFileName);

@@ -109,7 +109,7 @@ public abstract class AbstractMapper {
 		FileUtils.close(bw);
 		displayMessage2Master();
 		// Add message to give information about output file
-		System.out.println(CommonTags.TAG_OUTPUT_FILE+outputFile);
+		System.out.println(CommonTags.TAG_OUTPUT_FILE+FileUtils.addBackspaces(outputFile));
 	}
 
 }

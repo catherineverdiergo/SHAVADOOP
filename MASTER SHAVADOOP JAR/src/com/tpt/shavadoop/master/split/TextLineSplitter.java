@@ -43,16 +43,13 @@ public class TextLineSplitter implements ISplitter {
 					}
 					String splitFileName = String.format(destDir+"/split-"+UUID.randomUUID().toString());
 					BufferedWriter bw = FileUtils.openFile4Write(splitFileName);
-					int i = 1;
-					while (i%this.nbLines != 0 && line != null) {
+					int i = 0;
+					while (i<this.nbLines && line != null) {
 						bw.write(line+System.lineSeparator());
 						line = br.readLine();
 						i++;
 					}
 					FileUtils.close(bw);
-					if (line != null) {  
-						line = br.readLine();
-					}
 				}
 				catch (Exception e) {
 					logger.error(e,e);

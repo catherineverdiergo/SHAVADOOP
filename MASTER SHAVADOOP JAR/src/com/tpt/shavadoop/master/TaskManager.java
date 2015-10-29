@@ -1,10 +1,13 @@
 package com.tpt.shavadoop.master;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import com.tpt.shavadoop.master.monitor.DashBoardServer;
 import com.tpt.shavadoop.master.remote.AgregatorRemoteExecutor;
 import com.tpt.shavadoop.master.remote.ReducerRemoteExecutor;
 import com.tpt.shavadoop.master.remote.RemoteExecutor;
@@ -18,32 +21,39 @@ public class TaskManager extends Thread {
 	
 	private static final Logger logger = Logger.getLogger(TaskManager.class);
 	
+	public static final int WAITING_QUEUE   = 0; 
+	public static final int RUNNING_QUEUE   = 1; 
+	public static final int FAILED_QUEUE    = 2; 
+	public static final int COMPLETED_QUEUE = 3;
+	
+	public static final String[] QUEUE_LABELS = {
+			"WAITING_QUEUE",
+			"RUNNING_QUEUE",
+			"FAILED_QUEUE",
+			"COMPLETED_QUEUE"
+	};
+	
 	// Queues dedicated to mapper tasks
-	private List<RemoteExecutor> mappersWaitingQueue;
-	private List<RemoteExecutor> mappersRunningQueue;
-	private List<RemoteExecutor> mappersFailedQueue;
-	private List<RemoteExecutor> mappersCompletedQueue;
+	private Map<Integer,List<RemoteExecutor>> mapperQueues;
 	
 	// Queues dedicated to other tasks (suffle, reduce or agregate)
-	private List<RemoteExecutor> tskWaitingQueue;
-	private List<RemoteExecutor> tskRunningQueue;
-	private List<RemoteExecutor> tskFailedQueue;
-	private List<RemoteExecutor> tskCompletedQueue;
+	private Map<Integer,List<RemoteExecutor>> taskQueues;
 	
 	// Custom object dedicated to vote for the next candidate task (mappers excepted) 
 	private ITaskSelector tskSelector;
 	
+	// Web server to monitor system
+	private DashBoardServer monitorHttpServer;
+	
 	public static void initialization() {
 		if (instance == null) {
 			instance = new TaskManager();
-			instance.mappersWaitingQueue = new ArrayList<RemoteExecutor>();
-			instance.mappersRunningQueue = new ArrayList<RemoteExecutor>();
-			instance.mappersFailedQueue = new ArrayList<RemoteExecutor>();
-			instance.mappersCompletedQueue = new ArrayList<RemoteExecutor>();
-			instance.tskWaitingQueue = new ArrayList<RemoteExecutor>();
-			instance.tskRunningQueue = new ArrayList<RemoteExecutor>();
-			instance.tskFailedQueue = new ArrayList<RemoteExecutor>();
-			instance.tskCompletedQueue = new ArrayList<RemoteExecutor>();
+			instance.mapperQueues = new HashMap<Integer,List<RemoteExecutor>>();
+			instance.taskQueues = new HashMap<Integer,List<RemoteExecutor>>();
+			for (int i = WAITING_QUEUE; i<= COMPLETED_QUEUE; i++) {
+				instance.mapperQueues.put(i, new ArrayList<RemoteExecutor>());
+				instance.taskQueues.put(i, new ArrayList<RemoteExecutor>());
+			}
 			// read the class name ok the task selector to use from configuration
 			String tskSelectorClassName = Configuration.getParameter("task.selector");
 			// create the task selector
@@ -52,6 +62,9 @@ public class TaskManager extends Thread {
 			} catch (Exception e) {
 				logger.error(e,e);
 			}
+			// Create and start monitor http server
+			instance.monitorHttpServer = new DashBoardServer();
+			instance.monitorHttpServer.start();
 		}
 	}
 	
@@ -64,7 +77,7 @@ public class TaskManager extends Thread {
 			initialization();
 		}
 		logger.info("Adding mapper to queue - command is \""+mapper.getCommand()+"\"");
-		instance.mappersWaitingQueue.add(mapper);
+		instance.mapperQueues.get(WAITING_QUEUE).add(mapper);
 	}
 	
 	/**
@@ -76,7 +89,7 @@ public class TaskManager extends Thread {
 			initialization();
 		}
 		logger.info("Adding task to queue - command is \""+task.getCommand()+"\"");
-		instance.tskWaitingQueue.add(task);
+		instance.taskQueues.get(WAITING_QUEUE).add(task);
 	}
 	
 	/**
@@ -84,20 +97,20 @@ public class TaskManager extends Thread {
 	 * @param taskStyle could be "mapper" or "other"
 	 * @param task
 	 */
-	public static synchronized void waiting2Running(String taskStyle, RemoteExecutor task) {
+	public static void waiting2Running(String taskStyle, RemoteExecutor task) {
 		String hostCandidate = ResourceManager.reserveHost();
 		if (hostCandidate != null) {
 			if ("mapper".equals(taskStyle)) {
-				instance.mappersWaitingQueue.remove(task);
+				instance.mapperQueues.get(WAITING_QUEUE).remove(task);
 				task.setHostName(hostCandidate);
 				task.start();
-				instance.mappersRunningQueue.add(task);
+				instance.mapperQueues.get(RUNNING_QUEUE).add(task);
 			}
 			else {
-				instance.tskWaitingQueue.remove(task);
+				instance.taskQueues.get(WAITING_QUEUE).remove(task);
 				task.setHostName(hostCandidate);
 				task.start();
-				instance.tskRunningQueue.add(task);
+				instance.taskQueues.get(RUNNING_QUEUE).add(task);
 			}
 		}
 	}
@@ -107,23 +120,23 @@ public class TaskManager extends Thread {
 	 * @param taskStyle could be "mapper" or "other"
 	 * @param task
 	 */
-	public static synchronized void running2FinalState(String taskStyle, RemoteExecutor task) {
+	public static void running2FinalState(String taskStyle, RemoteExecutor task) {
 		if ("mapper".equals(taskStyle)) {
-			instance.mappersRunningQueue.remove(task);
+			instance.mapperQueues.get(RUNNING_QUEUE).remove(task);
 			if (instance.tskSelector.compileTaskResults("mapper", task)) {
-				instance.mappersCompletedQueue.add(task);
+				instance.mapperQueues.get(COMPLETED_QUEUE).add(task);
 			}
 			else {
-				instance.mappersFailedQueue.add(task);
+				instance.mapperQueues.get(FAILED_QUEUE).add(task);
 			}
 		}
 		else {
-			instance.tskRunningQueue.remove(task);
+			instance.taskQueues.get(RUNNING_QUEUE).remove(task);
 			if (instance.tskSelector.compileTaskResults(null, task)) {
-				instance.tskCompletedQueue.add(task);
+				instance.taskQueues.get(COMPLETED_QUEUE).add(task);
 			}
 			else {
-				instance.tskFailedQueue.add(task);
+				instance.taskQueues.get(FAILED_QUEUE).add(task);
 			}
 		}
 		// Release host
@@ -137,20 +150,30 @@ public class TaskManager extends Thread {
 	 * @param taskStyle could be "mapper" or "other"
 	 * @param task
 	 */
-	public static synchronized void fail2Running(String taskStyle, RemoteExecutor task) {
+	public static void fail2Running(String taskStyle, RemoteExecutor task) {
 		String hostCandidate = ResourceManager.reserveHost();
 		if (hostCandidate != null) {
 			if ("mapper".equals(taskStyle)) {
-				instance.mappersFailedQueue.remove(task);
+				instance.mapperQueues.get(FAILED_QUEUE).remove(task);
 				task.setHostName(hostCandidate);
 				task.start();
-				instance.mappersRunningQueue.add(task);
+				instance.mapperQueues.get(RUNNING_QUEUE).add(task);
 			}
 			else {
-				instance.tskFailedQueue.remove(task);
-				task.setHostName(hostCandidate);
-				task.start();
-				instance.tskRunningQueue.add(task);
+				instance.taskQueues.get(FAILED_QUEUE).remove(task);
+				if (task instanceof ShuffleRemoteExecutor) {
+					ShuffleRemoteExecutor replayTask = new ShuffleRemoteExecutor(task.getCommand());
+					replayTask.setWordKey(((ShuffleRemoteExecutor)task).getWordKey());
+					instance.taskQueues.get(WAITING_QUEUE).add(replayTask);
+				}
+				else if (task instanceof ReducerRemoteExecutor) {
+					ReducerRemoteExecutor replayTask = new ReducerRemoteExecutor(task.getCommand());
+					instance.taskQueues.get(WAITING_QUEUE).add(replayTask);
+				}
+				else if (task instanceof AgregatorRemoteExecutor) {
+					AgregatorRemoteExecutor replayTask = new AgregatorRemoteExecutor(task.getCommand());
+					instance.taskQueues.get(WAITING_QUEUE).add(replayTask);
+				}
 			}
 		}
 	}
@@ -160,16 +183,21 @@ public class TaskManager extends Thread {
 	 * @return
 	 */
 	private boolean allMappersCompleted() {
-		return (instance.mappersWaitingQueue.size()+
-				instance.mappersRunningQueue.size()+
-				instance.mappersFailedQueue.size())==0;
+		return (instance.mapperQueues.get(WAITING_QUEUE).size()+
+				instance.mapperQueues.get(RUNNING_QUEUE).size()+
+				instance.mapperQueues.get(FAILED_QUEUE).size())==0;
 	}
 	
 	private void manageRunningMappers() {
-		for (RemoteExecutor re:instance.mappersRunningQueue) {
-			if (!re.isAlive()) {
-				running2FinalState("mapper", re);
+		RemoteExecutor re = null;
+		for (RemoteExecutor mapper:instance.mapperQueues.get(RUNNING_QUEUE)) {
+			if (!mapper.isAlive()) {
+				re = mapper;
+				break;
 			}
+		}
+		if (re != null) {
+			running2FinalState("mapper", re);
 		}
 	}
 
@@ -178,16 +206,21 @@ public class TaskManager extends Thread {
 	 * @return
 	 */
 	private boolean allTasksCompleted() {
-		return (instance.tskWaitingQueue.size()+
-				instance.tskRunningQueue.size()+
-				instance.tskFailedQueue.size())==0;
+		return (instance.taskQueues.get(WAITING_QUEUE).size()+
+				instance.taskQueues.get(RUNNING_QUEUE).size()+
+				instance.taskQueues.get(FAILED_QUEUE).size())==0;
 	}
 	
 	private void manageRunningTasks() {
-		for (RemoteExecutor re:instance.tskRunningQueue) {
-			if (!re.isAlive()) {
-				running2FinalState(getTaskStyle(re), re);
+		RemoteExecutor re = null;
+		for (RemoteExecutor mapper:instance.taskQueues.get(RUNNING_QUEUE)) {
+			if (!mapper.isAlive()) {
+				re = mapper;
+				break;
 			}
+		}
+		if (re != null) {
+			running2FinalState(getTaskStyle(re), re);
 		}
 	}
 
@@ -215,12 +248,12 @@ public class TaskManager extends Thread {
 		// Manage mappers until all completed
 		while (!allMappersCompleted()) {
 			// manage next waiting
-			if (instance.mappersWaitingQueue.size() > 0) {
-				waiting2Running("mapper", instance.mappersWaitingQueue.get(0));
+			if (instance.mapperQueues.get(WAITING_QUEUE).size() > 0) {
+				waiting2Running("mapper", instance.mapperQueues.get(WAITING_QUEUE).get(0));
 			}
 			// manager next failed
-			if (instance.mappersFailedQueue.size() > 0) {
-				fail2Running("mapper", instance.mappersFailedQueue.get(0));
+			if (instance.mapperQueues.get(FAILED_QUEUE).size() > 0) {
+				fail2Running("mapper", instance.mapperQueues.get(FAILED_QUEUE).get(0));
 			}
 			// manage running
 			manageRunningMappers();
@@ -239,13 +272,13 @@ public class TaskManager extends Thread {
 		// Manage tasks until all completed
 		while (!allTasksCompleted() && tskSelector.hasNextCandidate()) {
 			// manage next waiting
-			if (instance.tskWaitingQueue.size() > 0) {
-				RemoteExecutor task = instance.tskWaitingQueue.get(0);
+			if (instance.taskQueues.get(WAITING_QUEUE).size() > 0) {
+				RemoteExecutor task = instance.taskQueues.get(WAITING_QUEUE).get(0);
 				waiting2Running(getTaskStyle(task), task);
 			}
 			// manager next failed
-			if (instance.mappersFailedQueue.size() > 0) {
-				RemoteExecutor task = instance.tskFailedQueue.get(0);
+			if (instance.taskQueues.get(FAILED_QUEUE).size() > 0) {
+				RemoteExecutor task = instance.taskQueues.get(FAILED_QUEUE).get(0);
 				fail2Running(getTaskStyle(task), task);
 			}
 			// manage running
@@ -285,18 +318,86 @@ public class TaskManager extends Thread {
 	 */
 	public static void shutdown() {
 		// stop all running tasks
-		for (RemoteExecutor re:instance.mappersRunningQueue) {
+		for (RemoteExecutor re:instance.mapperQueues.get(RUNNING_QUEUE)) {
 			if (re.isAlive()) {
 				re = null;
 			}
 		}
-		instance.mappersRunningQueue.clear();
-		for (RemoteExecutor re:instance.tskRunningQueue) {
+		instance.mapperQueues.get(RUNNING_QUEUE).clear();
+		for (RemoteExecutor re:instance.taskQueues.get(RUNNING_QUEUE)) {
 			if (re.isAlive()) {
 				re = null;
 			}
 		}
-		instance.tskRunningQueue.clear();
+		instance.taskQueues.get(RUNNING_QUEUE).clear();
+		// stop monitor http server
+		instance.monitorHttpServer = null;
+	}
+	
+	/**
+	 * Return mapper queue status as json string
+	 * @return
+	 */
+	public synchronized static String getStatusMappers() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("\"mapper queues\" :").append("{");
+		for (int i = WAITING_QUEUE; i <= COMPLETED_QUEUE; i++) {
+			sb.append("\"").append(QUEUE_LABELS[i]).append("\":");
+			sb.append("{").append("\"nb entries\" :").append(instance.mapperQueues.get(i).size()).append(",");
+			sb.append("\"entries\" :[");
+			for (int j = 0; j<instance.mapperQueues.get(i).size(); j++) {
+				RemoteExecutor entry = instance.mapperQueues.get(i).get(j);
+				sb.append("\"").append(entry.getCommand()).append("\"");
+				if (j < instance.mapperQueues.get(i).size()-1) {
+					sb.append(",");
+				}
+			}
+			sb.append("]");
+			sb.append("}");
+			if (i < COMPLETED_QUEUE) {
+				sb.append(",");
+			}
+		}
+		sb.append("}");
+		return sb.toString();
+	}
+
+	/**
+	 * Return task queue status as json string
+	 * @return
+	 */
+	public synchronized static String getStatusTasks() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("\"task queues\" :").append("{");
+		for (int i = WAITING_QUEUE; i <= COMPLETED_QUEUE; i++) {
+			sb.append("\"").append(QUEUE_LABELS[i]).append("\":");
+			sb.append("{").append("\"nb entries\" :").append(instance.taskQueues.get(i).size()).append(",");
+			sb.append("\"entries\" :[");
+			for (int j = 0; j<instance.taskQueues.get(i).size(); j++) {
+				RemoteExecutor entry = instance.taskQueues.get(i).get(j);
+				sb.append("\"").append(entry.getCommand()).append("\"");
+				if (j < instance.taskQueues.get(i).size()-1) {
+					sb.append(",");
+				}
+			}
+			sb.append("]");
+			sb.append("}");
+			if (i < COMPLETED_QUEUE) {
+				sb.append(",");
+			}
+		}
+		sb.append("}");
+		return sb.toString();
+	}
+
+	/**
+	 * Returns queues status as json string
+	 * @return
+	 */
+	public synchronized static String getStatus() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("{").append(getStatusMappers()).append(",").append(getStatusTasks()).append("}");
+		return sb.toString();
 	}
 	
 }

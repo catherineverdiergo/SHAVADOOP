@@ -16,6 +16,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import com.tpt.shavadoop.master.Configuration;
+import com.tpt.shavadoop.master.TaskManager;
 /**
  * @author catherine
  *
@@ -34,6 +35,16 @@ public class DashBoardServer extends Thread {
 	static class MyHandler implements HttpHandler {
 		public void handle(HttpExchange t) throws IOException {
 			String response = "Welcome Real's HowTo test page";
+			t.sendResponseHeaders(200, response.length());
+			OutputStream os = t.getResponseBody();
+			os.write(response.getBytes());
+			os.close();
+		}
+	}
+	
+	static class MyRestHandler implements HttpHandler {
+		public void handle(HttpExchange t) throws IOException {
+			String response = TaskManager.getStatus();
 			t.sendResponseHeaders(200, response.length());
 			OutputStream os = t.getResponseBody();
 			os.write(response.getBytes());
@@ -88,6 +99,7 @@ public class DashBoardServer extends Thread {
 		try {
 			server = HttpServer.create(new InetSocketAddress(Integer.parseInt(Configuration.getParameter("monitor.port"))), 0);
 			server.createContext("/test", new MyHandler());
+			server.createContext("/shavadoop/rest/status", new MyRestHandler());
 			server.createContext(Configuration.getParameter("monitor.maproot"), new MyFileHandler());
 			server.setExecutor(null); // creates a default executor
 			server.start();

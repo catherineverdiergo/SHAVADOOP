@@ -154,4 +154,12 @@ public class FileUtils {
 			close(bw);
 		}
 	}
+	
+	public static String addBackspaces(String fileName) {
+		return fileName.replace(" ", "\\\\ ");
+	}
+
+	public static String addSimpleBackspaces(String fileName) {
+		return fileName.replace(" ", "\\ ");
+	}
 }

@@ -19,6 +19,8 @@ public class Shuffle {
 
 	// List of files to shuffle will be written in a file
 	private String fileListName;
+	
+	private String workingDir;
 
 	// Will be filled from data in fileListName 
 	private List<String> inputFiles = new ArrayList<String>();
@@ -32,15 +34,22 @@ public class Shuffle {
 	 */
 	public Shuffle(String fileListName) {
 		super();
-		this.fileListName = fileListName;
+		this.fileListName = fileListName.replace("\\\\", "");
+		System.out.println(this.fileListName);
+		File inFile = new File(fileListName);
+		workingDir = inFile.getParent();
+		String [] keySplitter = inFile.getName().split("\\.");
+		this.wordKey = keySplitter[0];
 		BufferedReader br = FileUtils.openFile4Read(this.fileListName);
 		try {
 			String line = br.readLine();
 			while (line !=null) {
 				inputFiles.add(line);
+				line = br.readLine();
 			}
 		}
 		catch (IOException e) {
+			e.printStackTrace();
 			logger.error(e,e);
 		}
 		FileUtils.close(br);
@@ -87,20 +96,32 @@ public class Shuffle {
 	
 	public void doShuffle() {
 		try {
-			HeartBeat hb = new HeartBeat();
-			BufferedWriter bw = FileUtils.openFile4Write("SM-"+wordKey);
+			HeartBeat hb = null;
+			String destFile = this.workingDir+"/SM-"+wordKey;
+			destFile.replace(" ", "\\ ");
+			BufferedWriter bw = FileUtils.openFile4Write(destFile);
 			for (String inputFile:inputFiles) {
-				BufferedReader br = FileUtils.openFile4Read(inputFile);
+				BufferedReader br = FileUtils.openFile4Read(inputFile.replace("\\\\", ""));
 				String line = br.readLine();
 				while (line != null) {
-					if (!hb.isAlive()) {
-						hb.setInputFile(inputFile);
+					if (hb == null || !hb.isAlive()) {
+						hb = new HeartBeat();
+						hb.setInputFile(new File(inputFile.replace("\\\\", "")).getName());
 						hb.setKey(wordKey);
 						hb.start();
 					}
 					String[] tokens = line.split("[ \t]");
 					if (wordKey.equals(tokens[0])) {
 						bw.write(line+"\n");
+					}
+					line = br.readLine();
+					// Delay task to be able to test heart beat
+					if (Slave.DEFAULT_TASK_DELAY != -1) {
+						try {
+							Thread.sleep(Slave.DEFAULT_TASK_DELAY);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 				FileUtils.close(br);
@@ -109,6 +130,7 @@ public class Shuffle {
 			System.err.println(CommonTags.TAG_FINISHED_TASK+"Shuffle terminated");
 		}
 		catch (Exception e) {
+			e.printStackTrace();
 			logger.error(e,e);
 			System.err.println(CommonTags.TAG_ERROR_TASK+"IO error during shuffle");
 			System.exit(-1);
