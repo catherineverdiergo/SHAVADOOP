@@ -140,15 +140,16 @@ public class FileUtils {
 		    throw new FileNotFoundException("Failed to delete file: " + f);
 	}
 	
-	public static void copyFile(String srcFile, String tgtFile, boolean append) throws IOException {
+	public static void copyFile(String key, String srcFile, String tgtFile, boolean append) throws IOException {
 		File fsrc = new File(srcFile);
 		if (fsrc.exists()) {
 			BufferedReader br = openFile4Read(srcFile);
 			BufferedWriter bw = openF4Write(tgtFile, append);
 			String line = br.readLine();
 			while (line != null) {
-				bw.write(line);
+				bw.write(key+" "+line);
 				bw.newLine();
+				line = br.readLine();
 			}
 			close(br);
 			close(bw);

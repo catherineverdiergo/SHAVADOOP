@@ -93,17 +93,21 @@ public class WordCountTaskSelectector implements ITaskSelector {
 			if ("mapper".equals(taskStyle)) {
 				parseMapperOutResult(task);
 			}
-			if ("shuffle".equals(taskStyle)) {
+			else if ("shuffle".equals(taskStyle)) {
 				// Create related key reducer task
 				// retrieve word key
 				String wordKey = ((ShuffleRemoteExecutor)task).getWordKey();
 				String reducerCommand = Configuration.getParameter("slave.prg")+" --reduce ";
 				reducerCommand += Configuration.getParameter("slave.reducerClass");
-				reducerCommand += " "+Configuration.getWorkingDir()+" "+wordKey;
+				reducerCommand += " "+FileUtils.addBackspaces(new File(Configuration.getWorkingDir()).getAbsolutePath())+" "+wordKey;
 				ReducerRemoteExecutor rExecutor = new ReducerRemoteExecutor(reducerCommand);
 				TaskManager.addTask(rExecutor);
 			}
 			// Do nothing when reducer and no error
+			else if ("agregator".equals(taskStyle)) {
+				// If agregator finished properly, we can stop TaskManager
+				hasNextCandidate = false;
+			}
 		}
 		return result;
 	}
@@ -152,13 +156,19 @@ public class WordCountTaskSelectector implements ITaskSelector {
 		this.genShuffleTasks();
 	}
 
+	/* (non-Javadoc)
+	 * @see com.tpt.shavadoop.master.task.ITaskSelector#beforeJobEnd()
+	 */
 	@Override
 	public void beforeJobEnd() {
-		// Create agregator task and add it to TaskManager's task queue
-		String aCommand = Configuration.getParameter("slave.prg")+" --agregator "+Configuration.getWorkingDir();
-		AgregatorRemoteExecutor agregator = new AgregatorRemoteExecutor(aCommand);
-		TaskManager.addTask(agregator);
-		hasNextCandidate = false;
+		if (hasNextCandidate) {
+			// Create agregator task and add it to TaskManager's task queue
+			String aCommand = Configuration.getParameter("slave.prg")+" --agregate "
+					+ Configuration.getParameter("slave.agregator")+" "
+					+FileUtils.addBackspaces(new File(Configuration.getWorkingDir()).getAbsolutePath());
+			AgregatorRemoteExecutor agregator = new AgregatorRemoteExecutor(aCommand);
+			TaskManager.addTask(agregator);
+		}
 	}
 
 

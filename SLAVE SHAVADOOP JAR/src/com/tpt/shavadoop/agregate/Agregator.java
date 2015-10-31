@@ -89,7 +89,8 @@ public class Agregator {
 		
 		for (File f:dir.listFiles(ff)) {
 			try {
-				FileUtils.copyFile(f.getAbsolutePath(), inputDirectory+"/"+finalResultFile, true);
+				String key = f.getName().substring(f.getName().indexOf("-")+1, f.getName().length());
+				FileUtils.copyFile(key, f.getAbsolutePath(), inputDirectory+"/"+finalResultFile, true);
 			}
 			catch (Exception e) {
 				System.err.println(CommonTags.TAG_ERROR_TASK+"Error generating final target file");

@@ -44,7 +44,14 @@ public class DashBoardServer extends Thread {
 	
 	static class MyRestHandler implements HttpHandler {
 		public void handle(HttpExchange t) throws IOException {
-			String response = TaskManager.getStatus();
+			URI uri = t.getRequestURI();
+			String response = "";
+			if (uri.toString().endsWith("status")) {
+				response = TaskManager.getStatus();
+			}
+			else if (uri.toString().endsWith("result")) {
+				response = TaskManager.showResult();
+			}
 			t.sendResponseHeaders(200, response.length());
 			OutputStream os = t.getResponseBody();
 			os.write(response.getBytes());

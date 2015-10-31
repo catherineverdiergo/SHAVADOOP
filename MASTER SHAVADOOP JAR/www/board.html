@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='UTF-8' />
+	<script>
+		shavadoop_status = {"mapper queues" :{"WAITING_QUEUE":{"nb entries" :0,"entries" :[]},"RUNNING_QUEUE":{"nb entries" :0,"entries" :[]},"FAILED_QUEUE":{"nb entries" :0,"entries" :[]},"COMPLETED_QUEUE":{"nb entries" :3,"entries" :[{"command":"./slave.jar --map com.tpt.shavadoop.slave.map.WordCounterMapper /home/developer/catherine/myworkspace/SHAVADOOP/MASTER\\ SHAVADOOP\\ JAR/tmp28e6de2e-95b0-43e3-9ba6-8dbfdea51fb0/split-a6a64694-ebbd-4177-a07c-aafd0fbd4c96","host":"localhost"},{"command":"./slave.jar --map com.tpt.shavadoop.slave.map.WordCounterMapper /home/developer/catherine/myworkspace/SHAVADOOP/MASTER\\ SHAVADOOP\\ JAR/tmp28e6de2e-95b0-43e3-9ba6-8dbfdea51fb0/split-8e16d3de-75c1-45c3-ade0-f380273d3a10","host":"localhost"},{"command":"./slave.jar --map com.tpt.shavadoop.slave.map.WordCounterMapper /home/developer/catherine/myworkspace/SHAVADOOP/MASTER\\ SHAVADOOP\\ JAR/tmp28e6de2e-95b0-43e3-9ba6-8dbfdea51fb0/split-21f9c9a6-4ee2-4aec-8da6-82d6397b48b9","host":"localhost"}]}},"task queues" :{"WAITING_QUEUE":{"nb entries" :3,"entries" :["./slave.jar --shuffle  \"/home/developer/catherine/myworkspace/SHAVADOOP/MASTER\\ SHAVADOOP\\ JAR/tmp28e6de2e-95b0-43e3-9ba6-8dbfdea51fb0/Bear.files\"","./slave.jar --shuffle  \"/home/developer/catherine/myworkspace/SHAVADOOP/MASTER\\ SHAVADOOP\\ JAR/tmp28e6de2e-95b0-43e3-9ba6-8dbfdea51fb0/Deer.files\"","./slave.jar --reduce com.tpt.shavadoop.slave.reduce.WordCounterReducer /home/developer/catherine/myworkspace/SHAVADOOP/MASTER\\ SHAVADOOP\\ JAR/tmp28e6de2e-95b0-43e3-9ba6-8dbfdea51fb0 Car"]},"RUNNING_QUEUE":{"nb entries" :1,"entries" :["./slave.jar --shuffle  \"/home/developer/catherine/myworkspace/SHAVADOOP/MASTER\\ SHAVADOOP\\ JAR/tmp28e6de2e-95b0-43e3-9ba6-8dbfdea51fb0/River.files\""]},"FAILED_QUEUE":{"nb entries" :0,"entries" :[]},"COMPLETED_QUEUE":{"nb entries" :1,"entries" :[{"command":"./slave.jar --shuffle  \"/home/developer/catherine/myworkspace/SHAVADOOP/MASTER\\ SHAVADOOP\\ JAR/tmp28e6de2e-95b0-43e3-9ba6-8dbfdea51fb0/Car.files\"","host":"localhost"}]}}};
+	</script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+	<style type="text/css">
+    	.bs-example{
+    		margin: 20px;
+    		color : #007D7D
+	    }
+	    .panel-body {
+	    	color : #000000;
+	    }
+	    .modal .modal-body {
+ 		   max-height: 420px;
+		   overflow-y: auto;
+		}
+		</style>
+</head>
+<body>
+<div class="bs-example">
+
+    <!-- Modal HTML -->
+    <div id="myModal" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Job result</h4>
+                </div>
+                <div id="result_body" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+	<div class="panel-default">
+		<h1 style="text-align:center;">Shavadoop board monitor&nbsp;
+			<span id="shava_status" class="badge">24</span>
+			<a id="show_result_btn" href="#" class="btn btn-primary btn-lg pull-right disabled">Show result</a>
+		</h1>
+		
+	</div>
+	<div class="row">
+	<div class="col-xs-6">
+    <div class="panel panel-warning">
+        <div class="panel-heading">
+            <h3 class="panel-title">Waiting mappers<span id="nb_waiting_mappers" class="badge pull-right">24</span></h3>
+        </div>
+        <div id="body_waiting_mappers" class="panel-body">The request cannot be fulfilled due to bad syntax.</div>
+    </div>
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h3 class="panel-title">Running mappers<span id="nb_running_mappers" class="badge pull-right">24</span></h3>
+        </div>
+        <div id="body_running_mappers" class="panel-body">The request cannot be fulfilled due to bad syntax.</div>
+    </div>
+    <div class="panel panel-danger">
+        <div class="panel-heading">
+            <h3 class="panel-title">Failed mappers<span id="nb_failed_mappers" class="badge pull-right">24</span></h3>
+        </div>
+        <div id="body_failed_mappers" class="panel-body">The request cannot be fulfilled due to bad syntax.</div>
+    </div>
+    <div class="panel panel-success">
+        <div class="panel-heading">
+            <h3 class="panel-title">Completed mappers<span id="nb_completed_mappers" class="badge pull-right">24</span></h3>
+        </div>
+        <div id="body_completed_mappers" class="panel-body">
+	</div>
+    </div>
+    </div>
+	<div class="col-xs-6">
+    <div class="panel panel-warning">
+        <div class="panel-heading">
+            <h3 class="panel-title">Waiting tasks<span id="nb_waiting_tasks" class="badge pull-right">24</span></h3>
+        </div>
+        <div id="body_waiting_tasks" class="panel-body">The request cannot be fulfilled due to bad syntax.</div>
+    </div>
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h3 class="panel-title">Running tasks<span id="nb_running_tasks" class="badge pull-right">24</span></h3>
+        </div>
+        <div id="body_running_tasks" class="panel-body">The request cannot be fulfilled due to bad syntax.</div>
+    </div>
+    <div class="panel panel-danger">
+        <div class="panel-heading">
+            <h3 class="panel-title">Failed tasks<span id="nb_failed_tasks" class="badge pull-right">24</span></h3>
+        </div>
+        <div id="body_failed_tasks" class="panel-body">The request cannot be fulfilled due to bad syntax.</div>
+    </div>
+    <div class="panel panel-success">
+        <div class="panel-heading">
+            <h3 class="panel-title">Completed tasks<span id="nb_completed_tasks" class="badge pull-right">24</span></h3>
+        </div>
+        <div id="body_completed_tasks" class="panel-body">The request cannot be fulfilled due to bad syntax.</div>
+    </div>
+    </div>
+    </div>
+</div>
+</body>
+<script>
+
+	function get_shavadoop_result() {
+	    $.ajax({
+	        url:  'rest/status/result',
+	        context: document.body,
+	        type: 'GET',
+	        dataType: 'text',
+	  		async: false,
+	        success: function(data){
+	        	document.getElementById("result_body").innerHTML = data;
+	        },
+	        error: function(){
+	            alert("error");
+	        }  
+	    });		
+	}
+	
+	function get_shavadoop_status() {
+	    $.ajax({
+	        url:  'rest/status',
+	        context: document.body,
+	        type: 'GET',
+	        dataType: 'json',
+	  		async: false,
+	        success: function(data){
+	        	shavadoop_status = data;
+	        },
+	        error: function(){
+	            alert("error");
+	        }  
+	    });		
+	}
+	
+	var simpleTH = "<thead><tr><th>Command</th></tr></thead>";
+	var doubleTH = "<thead><tr><th>Command</th><th>Host</th></tr></thead>";
+	
+	function display_tasks(tasks_list, div_id, nb_tasks) {
+		var header_done = false;
+		var h_simple = false;
+		if (nb_tasks == 0) {
+			document.getElementById(div_id).innerHTML = "";
+		}
+		else {
+			innerHTML = "<table class=\"table\">";
+			var b_sup = Math.min(10,tasks_list.length);
+			for (var i = 0; i < b_sup; i++) {
+				var entry = tasks_list[i];
+				if (entry instanceof Object) {
+					if (!header_done) {
+						innerHTML += doubleTH;
+						header_done = true;
+					}
+					innerHTML += "<tr><td>"+entry["command"]+"</td><td>"+entry["host"]+"</td></tr>";
+				}
+				else {
+					if (!header_done) {
+						innerHTML += simpleTH;
+						header_done = true;
+						h_simple = true;
+					}
+					innerHTML += "<tr><td>"+entry+"</td></tr>";
+				}
+			} // for
+			if (b_sup < tasks_list.length) {
+				if (h_simple) {
+					innerHTML += "<tr><td>...</td></tr>";
+				}
+				else {
+					innerHTML += "<tr><td colspan=\"2\">...</td></tr>";
+				}
+			}
+			innerHTML += "</table>"
+			document.getElementById(div_id).innerHTML = innerHTML;
+		}
+	}
+	
+	$('#show_result_btn').on('click', function (e) {
+		get_shavadoop_result();
+		$("#myModal").modal('show');
+	})
+
+	function refresh_board() {
+		document.getElementById("shava_status").innerHTML = shavadoop_status["shavadoop status"];
+		
+		document.getElementById("nb_waiting_mappers").innerHTML = shavadoop_status["mapper queues"]["WAITING_QUEUE"]["nb entries"];
+		display_tasks(shavadoop_status["mapper queues"]["WAITING_QUEUE"]["entries"], "body_waiting_mappers", shavadoop_status["mapper queues"]["WAITING_QUEUE"]["nb entries"])
+		document.getElementById("nb_running_mappers").innerHTML = shavadoop_status["mapper queues"]["RUNNING_QUEUE"]["nb entries"];
+		display_tasks(shavadoop_status["mapper queues"]["RUNNING_QUEUE"]["entries"], "body_running_mappers", shavadoop_status["mapper queues"]["RUNNING_QUEUE"]["nb entries"])
+		document.getElementById("nb_failed_mappers").innerHTML = shavadoop_status["mapper queues"]["FAILED_QUEUE"]["nb entries"];
+		display_tasks(shavadoop_status["mapper queues"]["FAILED_QUEUE"]["entries"], "body_failed_mappers", shavadoop_status["mapper queues"]["FAILED_QUEUE"]["nb entries"])
+		document.getElementById("nb_completed_mappers").innerHTML = shavadoop_status["mapper queues"]["COMPLETED_QUEUE"]["nb entries"];
+		display_tasks(shavadoop_status["mapper queues"]["COMPLETED_QUEUE"]["entries"], "body_completed_mappers", shavadoop_status["mapper queues"]["COMPLETED_QUEUE"]["nb entries"])
+	
+		document.getElementById("nb_waiting_tasks").innerHTML = shavadoop_status["task queues"]["WAITING_QUEUE"]["nb entries"];
+		display_tasks(shavadoop_status["task queues"]["WAITING_QUEUE"]["entries"], "body_waiting_tasks", shavadoop_status["task queues"]["WAITING_QUEUE"]["nb entries"])
+		document.getElementById("nb_running_tasks").innerHTML = shavadoop_status["task queues"]["RUNNING_QUEUE"]["nb entries"];
+		display_tasks(shavadoop_status["task queues"]["RUNNING_QUEUE"]["entries"], "body_running_tasks", shavadoop_status["task queues"]["RUNNING_QUEUE"]["nb entries"])
+		document.getElementById("nb_failed_tasks").innerHTML = shavadoop_status["task queues"]["FAILED_QUEUE"]["nb entries"];
+		display_tasks(shavadoop_status["task queues"]["FAILED_QUEUE"]["entries"], "body_failed_tasks", shavadoop_status["task queues"]["FAILED_QUEUE"]["nb entries"])
+		document.getElementById("nb_completed_tasks").innerHTML = shavadoop_status["task queues"]["COMPLETED_QUEUE"]["nb entries"];
+		display_tasks(shavadoop_status["task queues"]["COMPLETED_QUEUE"]["entries"], "body_completed_tasks", shavadoop_status["task queues"]["COMPLETED_QUEUE"]["nb entries"])
+		
+		if (shavadoop_status["shavadoop status"] == 'job completed') {
+			document.getElementById("show_result_btn").className = "btn btn-primary btn-lg pull-right";
+		}
+		else {
+			document.getElementById("show_result_btn").className = "btn btn-primary btn-lg pull-right disabled";
+		}
+	}
+	
+	function refresh() {
+		get_shavadoop_status();
+		refresh_board();
+		if (shavadoop_status["shavadoop status"] != 'job completed') {
+			setTimeout(refresh,10000);
+		}
+	}
+	
+	refresh();
+	
+</script>
+</html>

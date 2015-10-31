@@ -2,6 +2,7 @@ package com.tpt.shavadoop.slave;
 
 import java.io.File;
 
+import com.tpt.shavadoop.agregate.Agregator;
 import com.tpt.shavadoop.slave.map.AbstractMapper;
 import com.tpt.shavadoop.slave.reduce.AbstractReducer;
 import com.tpt.shavadoop.slave.shuffle.Shuffle;
@@ -86,12 +87,11 @@ public class Slave {
 				else {
 					String reducerClassName = args[1];
 					try {
+//						for (String arg:args) {
+//							System.out.println(arg);
+//						}
 						AbstractReducer reducer = (AbstractReducer)Class.forName(reducerClassName).newInstance();
-						File iFile = new File(args[2]);
-						String iDirName = ".";
-						if (iFile.getParent()!=null) {
-							iDirName = iFile.getParent().toString();
-						}
+						File iDirName = new File(args[2]).getAbsoluteFile();
 						String fName = "SM-"+args[3];
 						reducer.doReduce(iDirName+"/"+fName, iDirName+"/RM-"+args[3]);
 					} catch (InstantiationException | IllegalAccessException
@@ -102,7 +102,19 @@ public class Slave {
 				}
 			}
 			else if (AGREGATE_TASK.equals(args[0])) {
-				
+				String agregatorClassName = args[1];
+				Agregator agregator;
+				try {
+					agregator = (Agregator)Class.forName(agregatorClassName).newInstance();
+					File iDirName = new File(args[2]).getAbsoluteFile();
+					agregator.setInputDirectory(iDirName.getAbsolutePath());
+					agregator.setInputFilesPrefix("RM-");
+					agregator.setFinalResultFile("Result");
+					agregator.doAgregation();
+				} catch (Exception e) {
+					System.err.println(CommonTags.TAG_ERROR_TASK+ "Error : unknown reducer class : "+agregatorClassName);
+					System.exit(-1);
+				}
 			}
 			else if (HELP.equals(args[0])) {
 				help();

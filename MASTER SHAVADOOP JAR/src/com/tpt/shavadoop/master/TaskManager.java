@@ -1,5 +1,8 @@
 package com.tpt.shavadoop.master;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +16,7 @@ import com.tpt.shavadoop.master.remote.ReducerRemoteExecutor;
 import com.tpt.shavadoop.master.remote.RemoteExecutor;
 import com.tpt.shavadoop.master.remote.ShuffleRemoteExecutor;
 import com.tpt.shavadoop.master.task.ITaskSelector;
+import com.tpt.shavadoop.util.FileUtils;
 
 public class TaskManager extends Thread {
 	
@@ -132,7 +136,7 @@ public class TaskManager extends Thread {
 		}
 		else {
 			instance.taskQueues.get(RUNNING_QUEUE).remove(task);
-			if (instance.tskSelector.compileTaskResults(null, task)) {
+			if (instance.tskSelector.compileTaskResults(instance.getTaskStyle(task), task)) {
 				instance.taskQueues.get(COMPLETED_QUEUE).add(task);
 			}
 			else {
@@ -141,7 +145,7 @@ public class TaskManager extends Thread {
 		}
 		// Release host
 		ResourceManager.releaseHost(task.getHostName());
-		task.setHostName(null);
+//		task.setHostName(null);
 		task.close();
 	}
 
@@ -151,29 +155,25 @@ public class TaskManager extends Thread {
 	 * @param task
 	 */
 	public static void fail2Running(String taskStyle, RemoteExecutor task) {
-		String hostCandidate = ResourceManager.reserveHost();
-		if (hostCandidate != null) {
-			if ("mapper".equals(taskStyle)) {
-				instance.mapperQueues.get(FAILED_QUEUE).remove(task);
-				task.setHostName(hostCandidate);
-				task.start();
-				instance.mapperQueues.get(RUNNING_QUEUE).add(task);
+		if ("mapper".equals(taskStyle)) {
+			instance.mapperQueues.get(FAILED_QUEUE).remove(task);
+			RemoteExecutor replayMapper = new RemoteExecutor(task.getCommand());
+			instance.mapperQueues.get(WAITING_QUEUE).add(replayMapper);
+		}
+		else {
+			instance.taskQueues.get(FAILED_QUEUE).remove(task);
+			if (task instanceof ShuffleRemoteExecutor) {
+				ShuffleRemoteExecutor replayTask = new ShuffleRemoteExecutor(task.getCommand());
+				replayTask.setWordKey(((ShuffleRemoteExecutor)task).getWordKey());
+				instance.taskQueues.get(WAITING_QUEUE).add(replayTask);
 			}
-			else {
-				instance.taskQueues.get(FAILED_QUEUE).remove(task);
-				if (task instanceof ShuffleRemoteExecutor) {
-					ShuffleRemoteExecutor replayTask = new ShuffleRemoteExecutor(task.getCommand());
-					replayTask.setWordKey(((ShuffleRemoteExecutor)task).getWordKey());
-					instance.taskQueues.get(WAITING_QUEUE).add(replayTask);
-				}
-				else if (task instanceof ReducerRemoteExecutor) {
-					ReducerRemoteExecutor replayTask = new ReducerRemoteExecutor(task.getCommand());
-					instance.taskQueues.get(WAITING_QUEUE).add(replayTask);
-				}
-				else if (task instanceof AgregatorRemoteExecutor) {
-					AgregatorRemoteExecutor replayTask = new AgregatorRemoteExecutor(task.getCommand());
-					instance.taskQueues.get(WAITING_QUEUE).add(replayTask);
-				}
+			else if (task instanceof ReducerRemoteExecutor) {
+				ReducerRemoteExecutor replayTask = new ReducerRemoteExecutor(task.getCommand());
+				instance.taskQueues.get(WAITING_QUEUE).add(replayTask);
+			}
+			else if (task instanceof AgregatorRemoteExecutor) {
+				AgregatorRemoteExecutor replayTask = new AgregatorRemoteExecutor(task.getCommand());
+				instance.taskQueues.get(WAITING_QUEUE).add(replayTask);
 			}
 		}
 	}
@@ -335,6 +335,23 @@ public class TaskManager extends Thread {
 	}
 	
 	/**
+	 * generate shavadoop global status as json properties 
+	 * @return
+	 */
+	public synchronized static String getGlobalStatus() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("\"shavadoop status\" :");
+		if (TaskManager.isRunning()) {
+			sb.append("\"job in progess...\"");
+		}
+		else {
+			sb.append("\"job completed\"");
+		}
+		sb.append(",\"working dir\" :\""+new File(Configuration.getWorkingDir()).getAbsolutePath()+"\"");
+		return sb.toString();
+	}
+	
+	/**
 	 * Return mapper queue status as json string
 	 * @return
 	 */
@@ -345,9 +362,15 @@ public class TaskManager extends Thread {
 			sb.append("\"").append(QUEUE_LABELS[i]).append("\":");
 			sb.append("{").append("\"nb entries\" :").append(instance.mapperQueues.get(i).size()).append(",");
 			sb.append("\"entries\" :[");
-			for (int j = 0; j<instance.mapperQueues.get(i).size(); j++) {
+			for (int j = 0; j < instance.mapperQueues.get(i).size(); j++) {
 				RemoteExecutor entry = instance.mapperQueues.get(i).get(j);
-				sb.append("\"").append(entry.getCommand()).append("\"");
+				if (i != COMPLETED_QUEUE) {
+					sb.append("\"").append(entry.getCommand().replace("\"", "\\\"")).append("\"");
+				}
+				else {
+					sb.append("{\"command\":").append("\"").append(entry.getCommand().replace("\"", "\\\"")).append("\"")
+					.append(",\"host\":\"").append(entry.getHostName()).append("\"}");					
+				}
 				if (j < instance.mapperQueues.get(i).size()-1) {
 					sb.append(",");
 				}
@@ -375,7 +398,13 @@ public class TaskManager extends Thread {
 			sb.append("\"entries\" :[");
 			for (int j = 0; j<instance.taskQueues.get(i).size(); j++) {
 				RemoteExecutor entry = instance.taskQueues.get(i).get(j);
-				sb.append("\"").append(entry.getCommand()).append("\"");
+				if (i != COMPLETED_QUEUE) {
+					sb.append("\"").append(entry.getCommand().replace("\"", "\\\"")).append("\"");
+				}
+				else {
+					sb.append("{\"command\":").append("\"").append(entry.getCommand().replace("\"", "\\\"")).append("\"")
+					.append(",\"host\":\"").append(entry.getHostName()).append("\"}");					
+				}
 				if (j < instance.taskQueues.get(i).size()-1) {
 					sb.append(",");
 				}
@@ -396,7 +425,28 @@ public class TaskManager extends Thread {
 	 */
 	public synchronized static String getStatus() {
 		StringBuffer sb = new StringBuffer();
-		sb.append("{").append(getStatusMappers()).append(",").append(getStatusTasks()).append("}");
+		sb.append("{").append(getGlobalStatus()).append(",").append(getStatusMappers()).append(",").append(getStatusTasks()).append("}");
+		return sb.toString();
+	}
+	
+	/**
+	 * Show result file
+	 * @return
+	 */
+	public static String showResult() {
+		StringBuffer sb = new StringBuffer();
+		String resFileName = FileUtils.addBackspaces(Configuration.getWorkingDir()+"/Result");
+		BufferedReader br = FileUtils.openFile4Read(resFileName);
+		String line;
+		try {
+			line = br.readLine();
+			while (line != null) {
+				line = br.readLine();
+				sb.append(line).append("<br>");
+			}
+		} catch (IOException e) {
+			logger.error(e,e);
+		}
 		return sb.toString();
 	}
 	

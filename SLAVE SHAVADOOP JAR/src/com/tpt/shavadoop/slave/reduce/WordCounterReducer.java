@@ -5,13 +5,11 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Date;
 
-import org.apache.log4j.Logger;
-
 import com.tpt.shavadoop.util.CommonTags;
 
 public class WordCounterReducer extends AbstractReducer {
 
-	private static final Logger logger = Logger.getLogger(WordCounterReducer.class);
+//	private static final Logger logger = Logger.getLogger(WordCounterReducer.class);
 	private int counter = 0;
 	
 	@Override
@@ -21,7 +19,7 @@ public class WordCounterReducer extends AbstractReducer {
 			result = inReader.readLine();
 		}
 		catch (Exception e) {
-			logger.error(e,e);
+			e.printStackTrace();
 		}
 		return result;
 	}
