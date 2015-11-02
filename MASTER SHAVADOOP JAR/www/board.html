@@ -225,6 +225,10 @@
 		if (shavadoop_status["shavadoop status"] != 'job completed') {
 			setTimeout(refresh,10000);
 		}
+		else {
+			get_shavadoop_result();
+			$("#myModal").modal('show');
+		}
 	}
 	
 	refresh();
