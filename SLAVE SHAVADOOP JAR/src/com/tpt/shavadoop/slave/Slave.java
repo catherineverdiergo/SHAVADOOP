@@ -92,6 +92,7 @@ public class Slave {
 //						}
 						AbstractReducer reducer = (AbstractReducer)Class.forName(reducerClassName).newInstance();
 						File iDirName = new File(args[2]).getAbsoluteFile();
+//						System.out.println(iDirName.getAbsolutePath());
 						String fName = "SM-"+args[3];
 						reducer.doReduce(iDirName+"/"+fName, iDirName+"/RM-"+args[3]);
 					} catch (InstantiationException | IllegalAccessException

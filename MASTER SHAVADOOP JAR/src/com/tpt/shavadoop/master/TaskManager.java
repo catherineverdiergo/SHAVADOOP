@@ -364,7 +364,7 @@ public class TaskManager extends Thread {
 			sb.append("\"entries\" :[");
 			for (int j = 0; j < instance.mapperQueues.get(i).size(); j++) {
 				RemoteExecutor entry = instance.mapperQueues.get(i).get(j);
-				if (i != COMPLETED_QUEUE) {
+				if (i == WAITING_QUEUE) {
 					sb.append("\"").append(entry.getCommand().replace("\"", "\\\"")).append("\"");
 				}
 				else {
@@ -398,7 +398,7 @@ public class TaskManager extends Thread {
 			sb.append("\"entries\" :[");
 			for (int j = 0; j<instance.taskQueues.get(i).size(); j++) {
 				RemoteExecutor entry = instance.taskQueues.get(i).get(j);
-				if (i != COMPLETED_QUEUE) {
+				if (i == WAITING_QUEUE) {
 					sb.append("\"").append(entry.getCommand().replace("\"", "\\\"")).append("\"");
 				}
 				else {

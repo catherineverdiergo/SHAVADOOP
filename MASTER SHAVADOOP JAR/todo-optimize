@@ -1,0 +1,13 @@
+Optimisations
+
+* comptage des mots : tout passer en minuscules (DONE)
+* éliminer les stop words (DONE)
+* retirer les tempo dans le save (NOT NECESSARY)
+* gérer un nombre de tâches simultannées par machine (à mettre dans la conf)
+
+
+Mise au point
+
+* gestion d'erreur sur ouverture/fermeture de fichiers dans le slave
+* paramétrage log4j
+* fermer les thread de hb qd la tâche de slave se termine
