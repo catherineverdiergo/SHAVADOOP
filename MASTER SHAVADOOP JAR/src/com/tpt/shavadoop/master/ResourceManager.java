@@ -16,8 +16,6 @@ public class ResourceManager {
 	private Map<String,Integer> availableHosts;
 	
 	private int nbTasksPerHost = ResourceManager.MAX_TASK_PER_HOST;
-
-//	List<String> buzzyHosts;
 	
 	private static ResourceManager instance=null;
 	
@@ -32,7 +30,6 @@ public class ResourceManager {
 				for (String host:onlineHosts) {
 					instance.availableHosts.put(host, 1);
 				}
-//				instance.buzzyHosts = new ArrayList<String>();
 			}
 			catch (Exception e) {
 				logger.error(e,e);
@@ -50,7 +47,6 @@ public class ResourceManager {
 			instance = new ResourceManager();
 			try {
 				instance.availableHosts = new HashMap<String, Integer>();
-//				instance.buzzyHosts = new ArrayList<String>();
 				if (CheckPing.checkHost(hostName)) {
 					instance.availableHosts.put(hostName,1);
 				}
@@ -80,15 +76,12 @@ public class ResourceManager {
 			while (itHost.hasNext()) {
 				String host = itHost.next();
 				int counterHost = instance.availableHosts.get(host);
-				if (counterHost < instance.nbTasksPerHost) {
+				if (counterHost <= instance.nbTasksPerHost) {
 					result = host;
-					instance.availableHosts.put(host, counterHost++);
+					instance.availableHosts.put(host, ++counterHost);
 					break;
 				}
 			}
-//			result = instance.availableHosts.get(0);
-//			instance.availableHosts.remove(0);
-//			instance.buzzyHosts.add(result);
 		}
 		return result;
 	}
@@ -98,12 +91,8 @@ public class ResourceManager {
 	 * @param hostName
 	 */
 	public static synchronized void releaseHost(String hostName) {
-//		if (instance.buzzyHosts.contains(hostName)) {
-//			instance.buzzyHosts.remove(hostName);
-//			instance.availableHosts.add(hostName);
-//		}
 		int counterHost = instance.availableHosts.get(hostName);
-		instance.availableHosts.put(hostName, counterHost--);
+		instance.availableHosts.put(hostName, --counterHost);
 	}
 
 }

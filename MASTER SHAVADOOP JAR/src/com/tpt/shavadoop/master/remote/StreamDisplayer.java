@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.tpt.shavadoop.util.StreamMessage;
 
 public class StreamDisplayer implements Runnable {
@@ -16,7 +18,9 @@ public class StreamDisplayer implements Runnable {
     
     protected List<StreamMessage> lastLines = new ArrayList<StreamMessage>();
     
-    StreamDisplayer(InputStream inputStream) {
+	private static final Logger logger = Logger.getLogger(StreamDisplayer.class);
+
+	StreamDisplayer(InputStream inputStream) {
         this.inputStream = inputStream;
     }
 
@@ -30,14 +34,14 @@ public class StreamDisplayer implements Runnable {
         String line = null;
         try {
             while ((line = br.readLine()) != null) {
-                System.out.println(line);
+                logger.info("receive message from task: "+line);
                 if (lastLines.size() >= 10) {
                 	this.lastLines.remove(0);
                 }
             	this.lastLines.add(new StreamMessage(line, new Date()));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e,e);
         }
     }
 

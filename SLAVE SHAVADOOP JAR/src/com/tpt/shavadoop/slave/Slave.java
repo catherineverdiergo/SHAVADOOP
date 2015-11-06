@@ -22,7 +22,7 @@ public class Slave {
 	/*
 	 * Default delay for heartbeats
 	 */
-	public static final int DEFAULT_HB_DELAY = 1000;
+	public static final int DEFAULT_HB_DELAY = 60000;
 	
 	/*
 	 * Delay task in order to be able to test heart beat

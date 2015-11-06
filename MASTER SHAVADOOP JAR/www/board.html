@@ -145,7 +145,7 @@
 	var simpleTH = "<thead><tr><th>Command</th></tr></thead>";
 	var doubleTH = "<thead><tr><th>Command</th><th>Host</th></tr></thead>";
 	
-	function display_tasks(tasks_list, div_id, nb_tasks) {
+	function display_tasks(tasks_list, div_id, nb_tasks, end) {
 		var header_done = false;
 		var h_simple = false;
 		if (nb_tasks == 0) {
@@ -154,7 +154,12 @@
 		else {
 			innerHTML = "<table class=\"table\">";
 			var b_sup = Math.min(10,tasks_list.length);
-			for (var i = 0; i < b_sup; i++) {
+			var b_inf = 0;
+			if (end) {
+				b_inf = tasks_list.length - b_sup;
+				b_sup = tasks_list.length;
+			}
+			for (var i = b_inf; i < b_sup; i++) {
 				var entry = tasks_list[i];
 				if (entry instanceof Object) {
 					if (!header_done) {
@@ -194,22 +199,22 @@
 		document.getElementById("shava_status").innerHTML = shavadoop_status["shavadoop status"];
 		
 		document.getElementById("nb_waiting_mappers").innerHTML = shavadoop_status["mapper queues"]["WAITING_QUEUE"]["nb entries"];
-		display_tasks(shavadoop_status["mapper queues"]["WAITING_QUEUE"]["entries"], "body_waiting_mappers", shavadoop_status["mapper queues"]["WAITING_QUEUE"]["nb entries"])
+		display_tasks(shavadoop_status["mapper queues"]["WAITING_QUEUE"]["entries"], "body_waiting_mappers", shavadoop_status["mapper queues"]["WAITING_QUEUE"]["nb entries"], false)
 		document.getElementById("nb_running_mappers").innerHTML = shavadoop_status["mapper queues"]["RUNNING_QUEUE"]["nb entries"];
-		display_tasks(shavadoop_status["mapper queues"]["RUNNING_QUEUE"]["entries"], "body_running_mappers", shavadoop_status["mapper queues"]["RUNNING_QUEUE"]["nb entries"])
+		display_tasks(shavadoop_status["mapper queues"]["RUNNING_QUEUE"]["entries"], "body_running_mappers", shavadoop_status["mapper queues"]["RUNNING_QUEUE"]["nb entries"], false)
 		document.getElementById("nb_failed_mappers").innerHTML = shavadoop_status["mapper queues"]["FAILED_QUEUE"]["nb entries"];
-		display_tasks(shavadoop_status["mapper queues"]["FAILED_QUEUE"]["entries"], "body_failed_mappers", shavadoop_status["mapper queues"]["FAILED_QUEUE"]["nb entries"])
+		display_tasks(shavadoop_status["mapper queues"]["FAILED_QUEUE"]["entries"], "body_failed_mappers", shavadoop_status["mapper queues"]["FAILED_QUEUE"]["nb entries"], false)
 		document.getElementById("nb_completed_mappers").innerHTML = shavadoop_status["mapper queues"]["COMPLETED_QUEUE"]["nb entries"];
-		display_tasks(shavadoop_status["mapper queues"]["COMPLETED_QUEUE"]["entries"], "body_completed_mappers", shavadoop_status["mapper queues"]["COMPLETED_QUEUE"]["nb entries"])
+		display_tasks(shavadoop_status["mapper queues"]["COMPLETED_QUEUE"]["entries"], "body_completed_mappers", shavadoop_status["mapper queues"]["COMPLETED_QUEUE"]["nb entries"], false)
 	
 		document.getElementById("nb_waiting_tasks").innerHTML = shavadoop_status["task queues"]["WAITING_QUEUE"]["nb entries"];
-		display_tasks(shavadoop_status["task queues"]["WAITING_QUEUE"]["entries"], "body_waiting_tasks", shavadoop_status["task queues"]["WAITING_QUEUE"]["nb entries"])
+		display_tasks(shavadoop_status["task queues"]["WAITING_QUEUE"]["entries"], "body_waiting_tasks", shavadoop_status["task queues"]["WAITING_QUEUE"]["nb entries"], false)
 		document.getElementById("nb_running_tasks").innerHTML = shavadoop_status["task queues"]["RUNNING_QUEUE"]["nb entries"];
-		display_tasks(shavadoop_status["task queues"]["RUNNING_QUEUE"]["entries"], "body_running_tasks", shavadoop_status["task queues"]["RUNNING_QUEUE"]["nb entries"])
+		display_tasks(shavadoop_status["task queues"]["RUNNING_QUEUE"]["entries"], "body_running_tasks", shavadoop_status["task queues"]["RUNNING_QUEUE"]["nb entries"], false)
 		document.getElementById("nb_failed_tasks").innerHTML = shavadoop_status["task queues"]["FAILED_QUEUE"]["nb entries"];
-		display_tasks(shavadoop_status["task queues"]["FAILED_QUEUE"]["entries"], "body_failed_tasks", shavadoop_status["task queues"]["FAILED_QUEUE"]["nb entries"])
+		display_tasks(shavadoop_status["task queues"]["FAILED_QUEUE"]["entries"], "body_failed_tasks", shavadoop_status["task queues"]["FAILED_QUEUE"]["nb entries"], false)
 		document.getElementById("nb_completed_tasks").innerHTML = shavadoop_status["task queues"]["COMPLETED_QUEUE"]["nb entries"];
-		display_tasks(shavadoop_status["task queues"]["COMPLETED_QUEUE"]["entries"], "body_completed_tasks", shavadoop_status["task queues"]["COMPLETED_QUEUE"]["nb entries"])
+		display_tasks(shavadoop_status["task queues"]["COMPLETED_QUEUE"]["entries"], "body_completed_tasks", shavadoop_status["task queues"]["COMPLETED_QUEUE"]["nb entries"], true)
 		
 		if (shavadoop_status["shavadoop status"] == 'job completed') {
 			document.getElementById("show_result_btn").className = "btn btn-primary btn-lg pull-right";

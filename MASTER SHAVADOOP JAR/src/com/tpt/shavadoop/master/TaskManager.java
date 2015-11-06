@@ -260,8 +260,7 @@ public class TaskManager extends Thread {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.error(e,e);
 			}
 		} // while mapper candidate exists
 		
@@ -286,8 +285,7 @@ public class TaskManager extends Thread {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.error(e,e);
 			}
 			// When all is completed
 			if (allTasksCompleted()) {

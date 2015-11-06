@@ -3,9 +3,11 @@ package com.tpt.shavadoop.master;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
 
+import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 
 import com.tpt.shavadoop.master.split.ISplitter;
@@ -17,6 +19,8 @@ public class Configuration {
 	
 	private static final String DEFAULT_CONF_FILE = "conf/master.properties";
 	
+	private static final Logger logger = Logger.getLogger(Configuration.class);
+
 	// Configuration file name (default is master.properties)
 	private String confFileName;
 	
@@ -99,6 +103,12 @@ public class Configuration {
 	    		// create the splitter
 	    		String dataFileName = instance.properties.getProperty("data.file");
 	    		instance.splitter = (ISplitter)Class.forName(instance.properties.getProperty("splitter.class")).getConstructor(String.class).newInstance(dataFileName);
+	    		logger.info("!!!!!!!!!!!!!!!!!!!!!");
+	    		logger.info("Shavadoop parameters:");
+	    		logger.info("!!!!!!!!!!!!!!!!!!!!!");
+	    		for (Entry<Object,Object> prop:instance.properties.entrySet()) {
+	    			logger.info(prop.getKey()+" = "+prop.getValue());
+	    		}
 	    	}
 	    	catch (Exception e) {
 	    		e.printStackTrace();

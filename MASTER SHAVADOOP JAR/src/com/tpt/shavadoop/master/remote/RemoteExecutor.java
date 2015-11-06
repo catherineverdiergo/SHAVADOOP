@@ -49,7 +49,7 @@ public class RemoteExecutor extends Thread {
 	            	Thread.sleep(100);
 	            	Date hbDate = fluxErreur.getLastHeartBeatDate();
 	            	Date now = new Date();
-	            	if (hbDate != null && now.getTime() - hbDate.getTime() > 10000) {
+	            	if (hbDate != null && now.getTime() - hbDate.getTime() > 90000) {
 	            		errorMessage = "Error : no more heart beat for "+command;
 	            		pRunningProperly = false;
 	            	}
